@@ -376,7 +376,7 @@ async function executar() {
     await testarPessoas();
     await testarBibliotecas();
   } catch (err) {
-    console.error("\n💥 Erro inesperado:", err.message);
+    console.error("\n Erro inesperado:", err.message);
     console.error(
       "   Verifique se a API está rodando em http://localhost:8080\n"
     );
@@ -394,7 +394,7 @@ async function executar() {
       "\n Testes reprovados indicam bugs conhecidos documentados em bug-report.md"
     );
   } else {
-    console.log("\n🎉 Todos os testes passaram!");
+    console.log("\n Todos os testes passaram!");
   }
   console.log("");
 }
