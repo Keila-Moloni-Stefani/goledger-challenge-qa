@@ -1,0 +1,351 @@
+{
+  "info": {
+    "name": "GoLedger QA Challenge — Testes da API",
+    "description": "Coleção de testes automatizados para o desafio de QA da GoLedger.\n\nComo usar:\n1. Importe este arquivo no Postman (File > Import)\n2. Certifique-se de que a API está rodando em http://localhost:8080\n3. Execute a coleção completa (Run Collection)\n\nOu via Newman:\n  npm install -g newman\n  newman run api/tests/goledger-qa.postman_collection.json",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8080", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "novo_usuario", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "1. Autenticação",
+      "item": [
+        {
+          "name": "✅ Login com credenciais válidas",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status deve ser 200', function () { pm.response.to.have.status(200); });",
+            "pm.test('Resposta deve conter token JWT', function () {",
+            "    const json = pm.response.json();",
+            "    pm.expect(json).to.have.property('token');",
+            "    pm.expect(json.token).to.be.a('string').and.not.empty;",
+            "    pm.collectionVariables.set('token', json.token);",
+            "});"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"username\": \"admin\", \"password\": \"admin123\"}" },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "✅ Login com senha errada retorna 401",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status deve ser 401', function () { pm.response.to.have.status(401); });",
+            "pm.test('Resposta deve conter mensagem de erro', function () { pm.expect(pm.response.json()).to.have.property('error'); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"username\": \"admin\", \"password\": \"senhaerrada\"}" },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "✅ Login com body vazio retorna 400",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status deve ser 400', function () { pm.response.to.have.status(400); });",
+            "pm.test('Resposta deve conter mensagem de erro', function () { pm.expect(pm.response.json()).to.have.property('error'); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "✅ Cadastro de novo usuário retorna 201",
+          "event": [
+            { "listen": "prerequest", "script": { "exec": ["pm.collectionVariables.set('novo_usuario', 'usuario_teste_' + Date.now());"] }},
+            { "listen": "test", "script": { "exec": [
+              "pm.test('Status deve ser 201', function () { pm.response.to.have.status(201); });",
+              "pm.test('Resposta não deve conter campo password', function () { pm.expect(pm.response.json()).to.not.have.property('password'); });"
+            ]}}
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"username\": \"{{novo_usuario}}\", \"password\": \"senha123\"}" },
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "✅ Cadastro duplicado retorna 409",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status deve ser 409 para usuário duplicado', function () { pm.response.to.have.status(409); });",
+            "pm.test('Resposta deve conter mensagem de erro', function () { pm.expect(pm.response.json()).to.have.property('error'); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"username\": \"{{novo_usuario}}\", \"password\": \"senha123\"}" },
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] }
+          }
+        },
+        {
+          "name": "❌ BUG-002: GET /me expõe senha em texto puro",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status deve ser 200', function () { pm.response.to.have.status(200); });",
+            "pm.test('BUG-002: Resposta NÃO deve conter campo password (falha de segurança)', function () {",
+            "    pm.expect(pm.response.json(), 'Campo password está exposto na resposta!').to.not.have.property('password');",
+            "});"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/me", "host": ["{{base_url}}"], "path": ["me"] }
+          }
+        },
+        {
+          "name": "✅ GET /me sem token retorna 401",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status deve ser 401', function () { pm.response.to.have.status(401); });"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/me", "host": ["{{base_url}}"], "path": ["me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Livros (Books)",
+      "item": [
+        {
+          "name": "✅ GET /books sem token retorna 401",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status deve ser 401', function () { pm.response.to.have.status(401); });"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/books?author=Alan%20Donovan",
+              "host": ["{{base_url}}"],
+              "path": ["books"],
+              "query": [{ "key": "author", "value": "Alan Donovan" }]
+            }
+          }
+        },
+        {
+          "name": "✅ POST /books sem token retorna 401",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status deve ser 401', function () { pm.response.to.have.status(401); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"title\": \"Livro Teste\", \"author\": \"Autor Teste\", \"genres\": [\"Tecnologia\"], \"bookType\": 0}" },
+            "url": { "raw": "{{base_url}}/books", "host": ["{{base_url}}"], "path": ["books"] }
+          }
+        },
+        {
+          "name": "❌ BUG-001: DELETE /books sem token não rejeita a requisição",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('BUG-001: DELETE /books sem token deve retornar 401 (endpoint não exige autenticação)', function () {",
+            "    pm.expect(pm.response.code, 'Endpoint aceitou requisição sem token! Status: ' + pm.response.code).to.equal(401);",
+            "});"
+          ]}}],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/books?title=The%20Go%20Programming%20Language&author=Alan%20Donovan",
+              "host": ["{{base_url}}"],
+              "path": ["books"],
+              "query": [
+                { "key": "title", "value": "The Go Programming Language" },
+                { "key": "author", "value": "Alan Donovan" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "❌ BUG-004: GET /books com filtro de gênero retorna vazio",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status deve ser 200', function () { pm.response.to.have.status(200); });",
+            "pm.test('BUG-004: Filtro por gênero deve retornar resultados (filtro está quebrado)', function () {",
+            "    const json = pm.response.json();",
+            "    pm.expect(json, 'Filtro por gênero retornou lista vazia mesmo com livros cadastrados').to.be.an('array').and.not.empty;",
+            "});"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/books?author=Alan%20Donovan&genre=Technology&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["books"],
+              "query": [
+                { "key": "author", "value": "Alan Donovan" },
+                { "key": "genre", "value": "Technology" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "❌ BUG-007: GET /books expõe campos internos da blockchain",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status deve ser 200', function () { pm.response.to.have.status(200); });",
+            "pm.test('BUG-007: Resposta não deve conter campos internos da blockchain (@key, @lastTx, etc.)', function () {",
+            "    const json = pm.response.json();",
+            "    if (Array.isArray(json) && json.length > 0) {",
+            "        const campos = Object.keys(json[0]).filter(k => k.startsWith('@') && k !== '@assetType');",
+            "        pm.expect(campos, 'Campos internos encontrados: ' + campos.join(', ')).to.be.empty;",
+            "    }",
+            "});"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/books?author=Alan%20Donovan&page=1&limit=1",
+              "host": ["{{base_url}}"],
+              "path": ["books"],
+              "query": [
+                { "key": "author", "value": "Alan Donovan" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "✅ POST /books com bookType inválido retorna 400",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status deve ser 400 para bookType inválido', function () { pm.response.to.have.status(400); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"title\": \"Livro Inválido\", \"author\": \"Autor Teste\", \"genres\": [\"Tech\"], \"bookType\": 99}" },
+            "url": { "raw": "{{base_url}}/books", "host": ["{{base_url}}"], "path": ["books"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Pessoas (Persons)",
+      "item": [
+        {
+          "name": "✅ POST /persons sem token retorna 401",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status deve ser 401', function () { pm.response.to.have.status(401); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"id\": \"111.444.777-35\", \"name\": \"Teste\", \"dateOfBirth\": \"1990-01-15T00:00:00Z\", \"height\": 1.70}" },
+            "url": { "raw": "{{base_url}}/persons", "host": ["{{base_url}}"], "path": ["persons"] }
+          }
+        },
+        {
+          "name": "❌ BUG-006: POST /persons retorna null no body",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const status = pm.response.code;",
+            "if (status === 201) {",
+            "    pm.test('BUG-006: POST /persons (201) deve retornar dados da pessoa, não null', function () {",
+            "        const json = pm.response.json();",
+            "        pm.expect(json, 'Body da resposta é null!').to.not.be.null;",
+            "        pm.expect(json).to.be.an('object');",
+            "    });",
+            "} else {",
+            "    pm.test('POST /persons — pessoa já existe (409) ou criada (201)', function () {",
+            "        pm.expect(status).to.be.oneOf([201, 409]);",
+            "    });",
+            "}"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"id\": \"111.444.777-35\", \"name\": \"Maria Silva\", \"dateOfBirth\": \"1995-06-20T00:00:00Z\", \"height\": 1.65}" },
+            "url": { "raw": "{{base_url}}/persons", "host": ["{{base_url}}"], "path": ["persons"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Bibliotecas (Libraries)",
+      "item": [
+        {
+          "name": "✅ POST /libraries sem token retorna 401",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status deve ser 401', function () { pm.response.to.have.status(401); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"name\": \"Biblioteca Teste\"}" },
+            "url": { "raw": "{{base_url}}/libraries", "host": ["{{base_url}}"], "path": ["libraries"] }
+          }
+        },
+        {
+          "name": "❌ BUG-003: POST /libraries falha com payload correto",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('BUG-003: POST /libraries com payload válido deve retornar 201 ou 409 (endpoint está quebrado)', function () {",
+            "    pm.expect(pm.response.code,",
+            "        'Endpoint retornou ' + pm.response.code + ' mesmo com payload correto! Erro: ' + pm.response.text()",
+            "    ).to.be.oneOf([201, 409]);",
+            "});"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"name\": \"Biblioteca Central\"}" },
+            "url": { "raw": "{{base_url}}/libraries", "host": ["{{base_url}}"], "path": ["libraries"] }
+          }
+        },
+        {
+          "name": "✅ GET /libraries/:name/books sem token retorna 401",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status deve ser 401', function () { pm.response.to.have.status(401); });"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/libraries/Biblioteca%20Central/books",
+              "host": ["{{base_url}}"],
+              "path": ["libraries", "Biblioteca%20Central", "books"]
+            }
+          }
+        },
+        {
+          "name": "❌ BUG-009: GET /libraries/:name/books retorna 400 em vez de 404",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('BUG-009: Biblioteca inexistente deve retornar 404, não 400', function () {",
+            "    pm.expect(pm.response.code,",
+            "        'Status incorreto! Recebido ' + pm.response.code + ', esperado 404 para recurso não encontrado.'",
+            "    ).to.equal(404);",
+            "});"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/libraries/BibliotecaInexistente999/books",
+              "host": ["{{base_url}}"],
+              "path": ["libraries", "BibliotecaInexistente999", "books"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
