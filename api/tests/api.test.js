@@ -48,7 +48,7 @@ function verificar(nome, condicao, real, esperado) {
 }
 
 function secao(titulo) {
-  console.log(`\n📋 ${titulo}`);
+  console.log(`\n ${titulo}`);
   console.log("─".repeat(50));
 }
 
@@ -365,7 +365,7 @@ async function testarBibliotecas() {
 // ─── Executor ────────────────────────────────────────────────────────────────
 
 async function executar() {
-  console.log("\n🧪 GoLedger QA Challenge — Testes Automatizados da API");
+  console.log("\n GoLedger QA Challenge — Testes Automatizados da API");
   console.log("=".repeat(50));
   console.log(`   URL Base: ${URL_BASE}`);
   console.log(`   Data:     ${new Date().toISOString()}`);
@@ -386,12 +386,12 @@ async function executar() {
   const total = aprovados + reprovados;
   console.log("\n" + "=".repeat(50));
   console.log(
-    `📊 Resultado: ${total} testes | ✅ ${aprovados} aprovados | ❌ ${reprovados} reprovados`
+    ` Resultado: ${total} testes | ✅ ${aprovados} aprovados | ❌ ${reprovados} reprovados`
   );
 
   if (reprovados > 0) {
     console.log(
-      "\n⚠️  Testes reprovados indicam bugs conhecidos documentados em bug-report.md"
+      "\n Testes reprovados indicam bugs conhecidos documentados em bug-report.md"
     );
   } else {
     console.log("\n🎉 Todos os testes passaram!");
