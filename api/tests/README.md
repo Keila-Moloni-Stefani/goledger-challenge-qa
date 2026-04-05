@@ -41,11 +41,11 @@ node api/tests/api.test.js
 ### Exemplo de saída
 
 ```
-🧪 GoLedger QA Challenge — Testes Automatizados da API
+ GoLedger QA Challenge — Testes Automatizados da API
 ==================================================
    URL Base: http://localhost:8080
 
-📋 Autenticação
+ Autenticação
 ──────────────────────────────────────────────────
   ✅ Login com credenciais válidas retorna 200
   ✅ Resposta do login contém token JWT
@@ -59,7 +59,7 @@ node api/tests/api.test.js
      Recebido: campo password="admin123" está exposto na resposta
   ✅ GET /me sem token retorna 401
 
-📋 Livros (Books)
+ Livros (Books)
 ──────────────────────────────────────────────────
   ✅ GET /books sem token retorna 401
   ✅ POST /books sem token retorna 401
@@ -71,12 +71,12 @@ node api/tests/api.test.js
      Recebido: Com filtro de gênero: [] | Sem filtro: 0 resultado(s)
   ✅ POST /books com bookType inválido (99) retorna 400
 
-📋 Pessoas (Persons)
+ Pessoas (Persons)
 ──────────────────────────────────────────────────
   ✅ POST /persons sem token retorna 401
   ✅ POST /persons — pessoa já existe (409) ou foi criada (201)
 
-📋 Bibliotecas (Libraries)
+ Bibliotecas (Libraries)
 ──────────────────────────────────────────────────
   ✅ POST /libraries sem token retorna 401
   ❌ BUG-003: POST /libraries com payload válido deve retornar 201 (endpoint está quebrado)
@@ -88,8 +88,8 @@ node api/tests/api.test.js
      Recebido: Recebido 400
 
 ==================================================
-📊 Resultado: 20 testes | ✅ 15 aprovados | ❌ 5 reprovados
-⚠️  Testes reprovados indicam bugs conhecidos documentados em bug-report.md
+ Resultado: 20 testes | ✅ 15 aprovados | ❌ 5 reprovados
+ Testes reprovados indicam bugs conhecidos documentados em bug-report.md
 ```
 
 ---
